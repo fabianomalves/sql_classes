@@ -1,6 +1,6 @@
+*.csv
+*.zip
+*.db
 *.pyc
 *.vscode
-.vscode
-*.csv
-*.db
-.project
+*.project
