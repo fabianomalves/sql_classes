@@ -1,25 +1,131 @@
--- considerando as vendas de 2017 e pedidos enteregues
--- qual a receita de cada categoria de produto?
--- e o total de vendas?
--- em unidades e em pedidos?
+/* What's the total revenue for each product category?
+ * What are the total sales?
+ * What's the total of units, and orders?
+ */
 
-select 
-        t2.product_category_name,
-        sum(t1.price) as receita,
-        count(*) as total_itens_vendidos,
-        count(distinct t1.order_id) as qtde_pedidos,
-        round( count(*) / cast( count(distinct t1.order_id) as float), 2) as avg_item_por_pedido
+-- Select products table
+SELECT
+	*
+FROM
+	tb_products AS tp
+LIMIT 10;
+-----------------------------
 
-from tb_order_items as t1
+-- Select orders table 
+SELECT
+	*
+FROM
+	tb_orders AS to1
+LIMIT 10;
+-----------------------------
 
-left join tb_products as t2
-on t1.product_id = t2.product_id
+-- Select orders items table 
+SELECT *
+FROM tb_order_items AS toi
+LIMIT 10;
+-----------------------------
 
-left join tb_orders as t3
-on t1.order_id = t3.order_id
+/*Making a join and bring only product category name 
+ * from the table 2
+ */
+SELECT
+	t1.order_id,
+	t1.order_item_id,
+	t1.product_id,
+	t2.product_category_name,
+	t1.price 
+FROM
+	tb_order_items AS t1
+LEFT JOIN tb_products AS t2 
+ON
+	t1.product_id = t2.product_id
+-----------------------------
 
-where t3.order_status = 'delivered'
-and strftime('%Y',t3.order_approved_at) = '2017'
+/*Now using the GROUP BY the product_category_name. 
+ * In example, there is the query with join,
+ * filtering and bring the 10 best product category, 
+ * by revenue
+ * */ 
+SELECT
+	t2.product_category_name,
+	SUM(t1.price) AS revenue
+FROM
+	tb_order_items AS t1
+LEFT JOIN tb_products AS t2 
+ON
+	t1.product_id = t2.product_id
+GROUP BY 	
+	t2.product_category_name
+ORDER BY
+	SUM(t1.price) DESC
+LIMIT 10;
+-----------------------------
 
-group by t2.product_category_name
-order by count(*) / cast( count(distinct t1.order_id) as float) desc
+--Using a COUNT and exhibiting the counting of total sales items
+SELECT
+	t2.product_category_name,
+	SUM(t1.price) AS revenue,
+	COUNT(*) AS total_items_sales
+FROM
+	tb_order_items AS t1
+LEFT JOIN tb_products AS t2 
+ON
+	t1.product_id = t2.product_id
+GROUP BY 	
+	t2.product_category_name
+ORDER BY
+	SUM(t1.price) DESC
+-----------------------------
+
+SELECT t2.product_category_name, SUM(t1.price) AS revenue,
+-- Using COUNT, to bring all itens sales
+COUNT(*) AS total_items_sales,
+-- Using a DISTINCT, to bring back only distinct orders
+COUNT(DISTINCT t1.order_id) AS quant_orders,
+--Dividing the total sales by quantity order and using CAST to
+--transform integer into float.
+--Using round to limit the number in 2 decimals
+ROUND(COUNT(*) / CAST(COUNT(DISTINCT t1.order_id) AS FLOAT), 2) AS average_items_by_orders
+FROM tb_order_items AS t1
+LEFT JOIN tb_products AS t2 
+ON t1.product_id = t2.product_id
+GROUP BY 	
+	t2.product_category_name
+ORDER BY COUNT(*) / CAST(COUNT(DISTINCT t1.order_id) AS FLOAT) DESC
+-----------------------------	
+
+
+
+	
+SELECT
+	*
+FROM
+	tb_orders AS to1;
+-----------------------------	
+
+/* What's the total revenue for each product category?
+ * What are the total sales?
+ * What's the total of units, and orders?
+ * Considering only the sales from 2017, and delivered orders 
+ */
+
+SELECT t2.product_category_name, SUM(t1.price) AS revenue,
+-- Using COUNT, to bring all itens sales
+COUNT(*) AS total_items_sales,
+-- Using a DISTINCT, to bring back only distinct orders
+COUNT(DISTINCT t1.order_id) AS quant_orders,
+--Dividing the total sales by quantity order and using CAST to
+--transform integer into float.
+--Using round to limit the number in 2 decimals
+ROUND(COUNT(*) / CAST(COUNT(DISTINCT t1.order_id) AS FLOAT), 2) AS average_items_by_orders
+FROM tb_order_items AS t1
+LEFT JOIN tb_products AS t2 
+ON t1.product_id = t2.product_id
+LEFT JOIN tb_orders AS t3
+ON t1.order_id = t3.order_id
+WHERE t3.order_status = 'delivered'
+AND STRFTIME('%Y', t3.order_approved_at) = '2017'
+GROUP BY t2.product_category_name
+ORDER BY COUNT(*) / CAST( COUNT(DISTINCT t1.order_id) AS FLOAT ) DESC
+-----------------------------	
+
